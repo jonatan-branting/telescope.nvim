@@ -317,6 +317,7 @@ function Picker:find()
 
   -- TODO: Should probably always show all the line for results win, so should implement a resize for the windows
   a.nvim_win_set_option(results_win, 'wrap', false)
+  a.nvim_win_set_option(results_win, 'scrolloff', 0)
   a.nvim_win_set_option(results_win, 'winhl', 'Normal:TelescopeNormal')
   a.nvim_win_set_option(results_win, 'winblend', self.window.winblend)
   local results_border_win = results_opts.border and results_opts.border.win_id
@@ -359,7 +360,7 @@ function Picker:find()
   -- vim.cmd [[redraw]]
 
   -- First thing we want to do is set all the lines to blank.
-  self.max_results = popup_opts.results.height
+  self.max_results = 10000 -- TODO: actually handle this
 
   vim.api.nvim_buf_set_lines(results_bufnr, 0, self.max_results, false, utils.repeated_table(self.max_results, ""))
 
@@ -740,6 +741,10 @@ function Picker:set_selection(row)
   self._selection_entry = entry
   self._selection_row = row
 
+  vim.api.nvim_buf_call(self.results_bufnr, function()
+    vim.cmd([[normal! ]] .. self:get_index(row) .. [[gg]])
+  end)
+
   self:refresh_previewer()
 end
 
@@ -1002,8 +1007,6 @@ function Picker:get_result_completor(results_bufnr, find_id, prompt, status_upda
     status_updater()
   end
 end
-
-
 
 pickers.new = function(opts, defaults)
   local result = {}
